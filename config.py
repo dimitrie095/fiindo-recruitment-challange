@@ -7,6 +7,5 @@ DB_PATH = "sqlite:///fiindo_challenge.db"
 INDUSTRIES_OF_INTEREST = {
     "Banks - Diversified",
     "Software - Application",
-    "Consumer Electronics",
-    
+    "Consumer Electronics"
 }
