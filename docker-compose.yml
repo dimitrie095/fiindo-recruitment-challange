@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: fiindo_etl
+    volumes:
+      - .:/app
+    restart: on-failure
