@@ -1,4 +1,13 @@
-from fiindo_api import get_symbols, get_general_info, get_income_statement, get_revenue_quarters, get_net_income_ttm, get_financials, get_debt_ratio
+from fiindo_api import (
+    get_symbols,
+    get_general_info,
+    get_income_statement, 
+    get_revenue_quarters, 
+    get_net_income_ttm, 
+    get_financials, 
+    get_debt_ratio 
+    )
+
 from database import init_db, SessionLocal, upsert_ticker
 from src.models import Ticker, IndustryAggregate
 from config import INDUSTRIES_OF_INTEREST
@@ -14,7 +23,7 @@ def process_tickers():
 
     for symbol in symbols:
         try:
-            print(f"check symbol: {symbol}")
+            print(f"---check symbol: {symbol} ---")
             data = get_general_info(symbol)
             profile = data.get("fundamentals", {}).get("profile", {}).get("data", [{}])[0]
 
@@ -77,6 +86,8 @@ def process_tickers():
 
             if revenue_q1 is not None:
                 industry_stats[industry]["revenues"].append(revenue_q1)
+            
+            print(industry_stats)
 
         except Exception as e:
             print(f"Error processing {symbol}: {e}")
