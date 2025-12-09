@@ -1,116 +1,101 @@
-import requests
+from fiindo_api import get_symbols, get_general_info, get_income_statement, get_revenue_quarters, get_net_income_ttm, get_financials, get_debt_ratio
+from database import init_db, SessionLocal, upsert_ticker
+from src.models import Ticker, IndustryAggregate
+from config import INDUSTRIES_OF_INTEREST
+from calculations import calculate_pe_ratio, calculate_revenue_growth, calculate_debt_ratio
 
-API_BASE = "https://api.test.fiindo.com/api/v1/financials"
+def process_tickers():
+    init_db()
+    session = SessionLocal()
+    symbols = get_symbols()
+    print(f"Loaded {len(symbols)} symbols")
 
-def fetch_financial_data(symbol, statement_type):
-    """
-    Lädt die Financial Statement Daten (income_statement, cash_flow_statement, balance_sheet).
-    """
-    url = f"{API_BASE}/{symbol}/{statement_type}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json().get('fundamentals', {}).get('financials', {}).get(statement_type, {}).get('data', [])
-    else:
-        return []
+    industry_stats = {}
 
-def calculate_revenue_growth(rev_q1, rev_q2):
-    if rev_q1 is None or rev_q2 is None or rev_q1 == 0:
-        return None
-    return (rev_q2 - rev_q1) / rev_q1
+    for symbol in symbols:
+        try:
+            print(f"check symbol: {symbol}")
+            data = get_general_info(symbol)
+            profile = data.get("fundamentals", {}).get("profile", {}).get("data", [{}])[0]
 
-def get_revenue_quarters(income_statements):
-    """
-    Findet Q1 und Q2 Umsätze für Berechnung des Revenue Growth.
-    Wenn Q1 fehlt, versucht Q4 vom Vorjahr als Q1 zu verwenden.
-    """
-    sorted_statements = sorted(income_statements, key=lambda x: x['date'])
-    
-    # Suche Q1 und Q2 nach Datum
-    rev_q1 = None
-    rev_q2 = None
-    for i, entry in enumerate(sorted_statements):
-        period = entry.get("period")
-        revenue = entry.get("revenue")
-        date = entry.get("date")
-        
-        if period == "Q1":
-            rev_q1 = revenue
-            # Versuche direkt danach Q2 im gleichen Jahr zu finden
-            for next_entry in sorted_statements[i+1:]:
-                if next_entry.get("period") == "Q2" and next_entry.get("date")[:4] == date[:4]:
-                    rev_q2 = next_entry.get("revenue")
-                    break
-            if rev_q2 is not None:
-                break
-    
-    # Falls Q1 nicht gefunden, versuche Q2 und Q4 des Vorjahres
-    if rev_q1 is None or rev_q2 is None:
-        rev_q1 = None
-        rev_q2 = None
-        for entry in sorted_statements:
-            if entry.get("period") == "Q2":
-                rev_q2 = entry.get("revenue")
-                year_q2 = entry.get("date")[:4]
-                # Suche Q4 vom Vorjahr
-                for e in sorted_statements:
-                    if e.get("period") == "Q4" and e.get("date")[:4] == str(int(year_q2)-1):
-                        rev_q1 = e.get("revenue")
-                        break
-                break
+            industry = profile.get("industry")
+            if industry not in INDUSTRIES_OF_INTEREST:
+                print(f"check result: false")
+                continue
+            print(f"check result: true")
 
-    return rev_q1, rev_q2
+            price = profile.get("price")
+            income_statement_data = get_income_statement(symbol)
+            latest_quarter = None
+            for record in income_statement_data.get("fundamentals", {}).get("financials", {}).get("income_statement", {}).get("data", []):
+                if record.get("period") in ["Q1", "Q2", "Q3", "Q4"]:
+                    latest_quarter = record
+                    break  # oder suche nach dem neuesten Datum
+            
+            eps = latest_quarter.get("eps") if latest_quarter else None
+            pe_ratio = calculate_pe_ratio(price, eps)
+            print(f"{symbol} PE Ratio: {pe_ratio}")
 
-def get_net_income_ttm(income_statements):
-    # Suche den letzten FY Eintrag und nehme netIncome daraus
-    fy_entries = [e for e in income_statements if e.get("period") == "FY" and e.get("netIncome") is not None]
-    if not fy_entries:
-        return None
-    latest_fy = max(fy_entries, key=lambda x: x['date'])
-    return latest_fy.get("netIncome")
+            revenue_q1, revenue_q2 = get_revenue_quarters(income_statement_data)
+            
+            revenue_growth = calculate_revenue_growth(revenue_q1, revenue_q2)
+            print(revenue_growth)
+            print(f"{symbol} Revenue Growth: {revenue_growth}")
 
-def get_debt_ratio(balance_sheets):
-    # Nimmt den letzten FY Eintrag
-    fy_entries = [e for e in balance_sheets if e.get("period") == "FY"]
-    if not fy_entries:
-        return None
-    
-    latest_fy = max(fy_entries, key=lambda x: x['date'])
-    total_debt = latest_fy.get("totalDebt") or latest_fy.get("longTermDebt") or None
-    total_equity = latest_fy.get("totalEquity") or None
-    
-    if total_debt is None or total_equity is None or total_equity == 0:
-        return None
-    
-    return total_debt / total_equity
+            net_income_ttm = get_net_income_ttm(income_statement_data)
+            print(f"{symbol} Net Income TTM: {net_income_ttm}")
 
-def process_tickers(tickers):
-    results = {}
-    
-    for symbol in tickers:
-        income_statements = fetch_financial_data(symbol, "income_statement")
-        balance_sheets = fetch_financial_data(symbol, "balance_sheet")
-        
-        # Revenue Growth (Q1 vs Q2)
-        rev_q1, rev_q2 = get_revenue_quarters(income_statements)
-        revenue_growth = calculate_revenue_growth(rev_q1, rev_q2)
-        
-        # Net Income TTM
-        net_income_ttm = get_net_income_ttm(income_statements)
-        
-        # Debt Ratio
-        debt_ratio = get_debt_ratio(balance_sheets)
-        
-        results[symbol] = {
-            "RevenueGrowthQoQ": revenue_growth,
-            "NetIncomeTTM": net_income_ttm,
-            "DebtRatio": debt_ratio,
-        }
-        
-    return results
+            debt_ratio = get_debt_ratio(symbol)
+            print(f"{symbol} Debt Ratio: {debt_ratio}")
 
-# Beispielaufruf
+
+            ticker = Ticker(
+                symbol=symbol,
+                company_name=profile.get("companyName"),
+                industry=industry,
+                country=profile.get("country"),
+                pe_ratio=pe_ratio,
+                revenue_growth=revenue_growth,
+                net_income_ttm=net_income_ttm,
+                debt_ratio=debt_ratio
+            )
+            upsert_ticker(session, ticker)
+            
+
+            if industry not in industry_stats:
+                industry_stats[industry] = {
+                    "pe_ratios": [],
+                    "revenue_growths": [],
+                    "revenues": []
+                }
+
+            if pe_ratio is not None:
+                industry_stats[industry]["pe_ratios"].append(pe_ratio)
+
+            if revenue_growth is not None:
+                industry_stats[industry]["revenue_growths"].append(revenue_growth)
+
+            if revenue_q1 is not None:
+                industry_stats[industry]["revenues"].append(revenue_q1)
+
+        except Exception as e:
+            print(f"Error processing {symbol}: {e}")
+
+    for industry, stats in industry_stats.items():
+        avg_pe = (sum(stats["pe_ratios"]) / len(stats["pe_ratios"])) if stats["pe_ratios"] else None
+        avg_rev_growth = (sum(stats["revenue_growths"]) / len(stats["revenue_growths"])) if stats["revenue_growths"] else None
+        sum_revenue = sum(stats["revenues"]) if stats["revenues"] else None
+
+        agg = IndustryAggregate(
+            industry=industry,
+            avg_pe_ratio=avg_pe,
+            avg_revenue_growth=avg_rev_growth,
+            sum_revenue=sum_revenue
+        )
+        session.merge(agg)
+
+    session.commit()
+    session.close()
+
 if __name__ == "__main__":
-    tickers = ["THS.L", "HEX.L"]
-    data = process_tickers(tickers)
-    for sym, metrics in data.items():
-        print(f"{sym}: {metrics}")
+    process_tickers()
