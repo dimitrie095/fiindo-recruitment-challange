@@ -13,12 +13,3 @@ def calculate_debt_ratio(total_debt, total_equity):
         return None
     return total_debt / total_equity
 
-
-
-def get_net_income_ttm(income_statements):
-    # Suche den letzten FY Eintrag und nehme netIncome daraus
-    for entry in sorted(income_statements, key=lambda x: x['date'], reverse=True):
-        if entry.get("period") == "FY" and entry.get("netIncome") is not None:
-            return entry["netIncome"]
-    return None
-
