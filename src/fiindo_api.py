@@ -1,5 +1,5 @@
 import requests
-from config import API_BASE_URL, API_AUTH_TOKEN
+from src.config import API_BASE_URL, API_AUTH_TOKEN
 
 headers = {
     "Authorization": API_AUTH_TOKEN

@@ -1,7 +1,8 @@
 import sqlite3
 import pandas as pd
 
-DB_PATH = "fiindo_challenge.db"   
+from config import DB_PATH
+   
 
 def fetch_all(table_name):
     conn = sqlite3.connect(DB_PATH)

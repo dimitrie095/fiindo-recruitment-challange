@@ -15,4 +15,4 @@ COPY . .
 ENV PYTHONUNBUFFERED=1
 
 # Run the main script when the container launches
-CMD ["python", "main.py"]
+CMD ["python", " -m src.main"]

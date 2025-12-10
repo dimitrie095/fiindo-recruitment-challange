@@ -1,4 +1,4 @@
-from fiindo_api import (
+from src.fiindo_api import (
     get_symbols,
     get_general_info,
     get_income_statement, 
@@ -7,10 +7,10 @@ from fiindo_api import (
     get_financials, 
     get_debt_ratio 
 )
-from database import init_db, SessionLocal, upsert_ticker
+from src.database import init_db, SessionLocal, upsert_ticker
 from src.models import Ticker, IndustryAggregate
-from config import INDUSTRIES_OF_INTEREST
-from calculations import calculate_pe_ratio, calculate_revenue_growth, calculate_debt_ratio
+from src.config import INDUSTRIES_OF_INTEREST
+from src.calculations import calculate_pe_ratio, calculate_revenue_growth, calculate_debt_ratio
 
 def process_tickers():
     # Initialisiert die Datenbank (erzeugt Tabellen etc. falls nötig)

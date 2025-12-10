@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.models import Base, Ticker
-from database import upsert_ticker
+from src.database import upsert_ticker
 
 # Setup in-memory SQLite DB für Tests
 @pytest.fixture(scope="function")

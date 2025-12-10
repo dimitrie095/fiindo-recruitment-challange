@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.models import Base, Ticker
-from config import DB_PATH
+from src.config import DB_PATH
 
 engine = create_engine(DB_PATH)
 SessionLocal = sessionmaker(bind=engine)
