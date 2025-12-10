@@ -1,15 +1,15 @@
-````markdown
+
 # Fiindo ETL Project – Setup & Run Instructions
 
-## 📦 Project Setup
+## Project Setup
 
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/dimitrie095/fiindo-recruitment-challange
 cd fiindo-recruitment-challange
 ```
-````
+
 
 ### 2. Install Dependencies (Local Run)
 
@@ -79,7 +79,7 @@ docker build -t fiindo-etl .
 ### 2. Run the Container
 
 ```bash
-docker run --rm fiindo-etl
+docker run -u -m fiindo-etl
 ```
 
 ---
@@ -103,7 +103,7 @@ pytest
 Docker:
 
 ```bash
-docker run --rm fiindo-etl pytest
+docker run -u -m  fiindo-etl pytest
 ```
 
 ---
@@ -113,8 +113,6 @@ docker run --rm fiindo-etl pytest
 - SQLite database file is stored inside the project or container.
 - You can mount it using docker-compose for persistence.
 
----
 
-```
 
-```
+
