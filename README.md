@@ -1,83 +1,120 @@
-# Fiindo Recruitment Challenge
+````markdown
+# Fiindo ETL Project – Setup & Run Instructions
 
-This repository contains a coding challenge for fiindo candidates. Candidates should fork this repository and implement their solution based on the requirements below.
+## 📦 Project Setup
 
-## Challenge Overview
+### 1. Clone the Repository
 
-Create a data processing application that:
-- Fetches financial data from an API
-- Performs calculations on stock ticker data
-- Saves results to a SQLite database
+```bash
+git clone <your-repo-url>
+cd fiindo-recruitment-challange
+```
+````
 
-## Technical Requirements
+### 2. Install Dependencies (Local Run)
 
-### Input
-- **API Endpoint**: `https://api.test.fiindo.com` (docs: `https://api.test.fiindo.com/api/v1/docs/`)
-- **Authentication**: Use header `Auhtorization: Bearer {first_name}.{last_name}` with every request. Anything else WILL BE IGNORED. No other format or value will be accepted.
-- **Template**: This forked repository as starting point
+(Optional if you use Docker)
 
-### Output
-- **Database**: SQLite database with processed financial data
-- **Tables**: Individual ticker statistics and industry aggregations
+Create a virtual environment:
 
-## Process Steps
+```bash
+python -m venv venv
+```
 
-### 1. Data Collection
-- Connect to the Fiindo API
-- Authenticate using your identifier `Auhtorization: Bearer {first_name}.{last_name}`
-- Fetch financial data
+Activate it:
 
-### 2. Data Calculations
+- Windows:
 
-Calculate data for symbols only from those 3 industries:
-  - `Banks - Diversified`
-  - `Software - Application`
-  - `Consumer Electronics`
+```bash
+venv\Scripts\activate
+```
 
-#### Per Ticker Statistics
-- **PE Ratio**: Price-to-Earnings ratio calculation from last quarter
-- **Revenue Growth**: Quarter-over-quarter revenue growth (Q-1 vs Q-2)
-- **NetIncomeTTM**: Trailing twelve months net income
-- **DebtRatio**: Debt-to-equity ratio from last year
+- macOS/Linux:
 
-#### Industry Aggregation
-- **Average PE Ratio**: Mean PE ratio across all tickers in each industry
-- **Average Revenue Growth**: Mean revenue growth across all tickers in each industry
-- **Sum of Revenue**: Sum revenue across all tickers in each industry
+```bash
+source venv/bin/activate
+```
 
-### 3. Data Storage
-- Design appropriate database schema
-- Save individual ticker statistics
-- Save aggregated industry data
+Install packages:
 
-## Database Setup
+```bash
+pip install -r requirements.txt
+```
 
-### Database Files
-- `fiindo_challenge.db`: SQLite database file
-- `models.py`: SQLAlchemy model definitions (can be divided into separate files if needed)
-- `alembic/`: Database migration management
+---
 
-## Getting Started
+## ⚙️ Configure API
 
-1. **Fork this repository** to your GitHub account
-3. **Implement the solution** following the process steps outlined above 
+Open:
 
-## Deliverables
+```
+src/config.py
+```
 
-Your completed solution should include:
-- Working application that fetches data from the API
-- SQLite database with calculated results
-- Clean, documented code
-- README with setup and run instructions
+Set:
 
-## Bonus Points
+```python
+API_BASE_URL = "https://api.test.fiindo.com/api/v1"
+API_AUTH_TOKEN = "Bearer firstname.lastname"
+```
 
-### Dockerization
-- Containerize your solution using Docker
-- Create a `Dockerfile` and `docker-compose.yml`
+---
 
-### Unit Testing
-- Write comprehensive unit tests for ETL part your solution
+## ▶️ Run the Application (Local)
 
+```bash
+python -m src.main
+```
 
-Good luck with your implementation!
+---
+
+# 🐳 Run with Docker
+
+### 1. Build the Image
+
+```bash
+docker build -t fiindo-etl .
+```
+
+### 2. Run the Container
+
+```bash
+docker run --rm fiindo-etl
+```
+
+---
+
+# 🐳 Run with Docker Compose
+
+```bash
+docker-compose up --build
+```
+
+---
+
+# 🧪 Run Unit Tests
+
+Local:
+
+```bash
+pytest
+```
+
+Docker:
+
+```bash
+docker run --rm fiindo-etl pytest
+```
+
+---
+
+# 🗄 Database
+
+- SQLite database file is stored inside the project or container.
+- You can mount it using docker-compose for persistence.
+
+---
+
+```
+
+```
